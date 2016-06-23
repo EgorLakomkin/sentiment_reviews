@@ -16,9 +16,8 @@ top_20_topics = set([
 def top_20_topic_filter( topic_struct ):
     return topic_struct["topic"] in top_20_topics
 
-@app.route('/')
-def extract_topic():
-    review = u"The staff was bad."
+@app.route('/extract_topics/<review>')
+def extract_topic(review):
     if len(review) == 0:
         return jsonify({"status":"ERROR", "message" : "Review text should be non empty"})
     topics = list(yield_candidates( nlp, review ))

@@ -41,7 +41,7 @@ def yield_candidates( nlp_obj, text ):
                     res = {}
                     res['topic'] =  np.root.lemma_.lower()
                     res['topic_acomp'] = acomp_node.lemma_.lower()
-                    res['topic_phrase'] = phrase
+                    res['topic_phrase'] = [unicode(n)  for n in phrase]
 
                     yield res
 
