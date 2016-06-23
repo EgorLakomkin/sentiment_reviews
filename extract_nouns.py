@@ -15,6 +15,7 @@ def filter_noun_phrase(noun_phrase, doc):
     root = noun_phrase.root
     if root.lemma_ in np_root_filter_list:
         return False
+    print root.dep_, root
     if root.dep_ != "nsubj":
         return False
 
@@ -25,9 +26,24 @@ def get_candidate_sentiment_phrases( doc, noun_phrase ):
     res = []
     for node in  root.head.subtree:
         if node_acomp_filter( node ):
-            res.append( (list(root.head.subtree),np,  node) )
+            res.append( (list(root.head.subtree), noun_phrase,  node) )
 
     return res
+
+
+def yield_candidates( nlp_obj, text ):
+    doc = nlp_obj( text, entity = False )
+    for np in doc.noun_chunks:
+        if filter_noun_phrase( np, doc ):
+            acomp_nodes = get_candidate_sentiment_phrases( doc, np )
+            if len(acomp_nodes) > 0:
+                for phrase, np, acomp_node in acomp_nodes:
+                    res = {}
+                    res['topic'] =  np.root.lemma_.lower()
+                    res['topic_acomp'] = acomp_node.lemma_.lower()
+                    res['topic_phrase'] = phrase
+
+                    yield res
 
 if __name__ == "__main__":
     reviews = load_booking_reviews()
@@ -35,11 +51,14 @@ if __name__ == "__main__":
 
     freq_stats = defaultdict( float )
 
+    topic_stats = defaultdict(list)
+
     for review in reviews:
+
         review_text = review.text
 
         doc = nlp( review_text, entity = False )
-
+        print doc
         for np in doc.noun_chunks:
 
             if filter_noun_phrase( np, doc ):
@@ -47,6 +66,14 @@ if __name__ == "__main__":
                 if len(acomp_nodes) > 0:
                     for phrase, np, acomp_node in acomp_nodes:
                         print np, "->", acomp_node
+                        print np.root
+                        key = np.root.lemma_.lower()
+                        val = acomp_node.lemma_.lower()
+                        topic_stats[ key ].append( val )
                         print phrase
-
+    print "Total nodes", len(topic_stats)
+    topic_freq = {n: len(s) for n, s in topic_stats.iteritems() }
+    sorted_by_freq = sorted( topic_freq.iteritems(), key = lambda x: x[1], reverse= True )
+    for t, freq in sorted_by_freq[:20]:
+        print t, freq
     num_docs = len(reviews)

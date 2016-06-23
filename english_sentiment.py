@@ -8,6 +8,8 @@ from  sentiment import Tree
 from sklearn.pipeline import Pipeline
 
 from collections import Counter
+import itertools
+
 
 def getWords(tree):
     res = []
@@ -28,8 +30,11 @@ if __name__ == "__main__":
 
     print getWords( first_train_tree )
 
-    train_sentences_generator = [getWords(tree) for tree in X_trees_train ]
-    train_labels = [tree.get_whole_sentence_label() for tree in X_trees_train ]
+    train_sentences_generator = [getWords(tree)
+                                 for tree in itertools.chain(X_trees_train, X_trees_dev, X_trees_test)   ]
+
+    train_labels = [tree.get_whole_sentence_label()
+                    for tree in itertools.chain(X_trees_train, X_trees_dev, X_trees_test) ]
 
     pipeline = Pipeline([
         ('tfidf', TfidfVectorizer(min_df=3, max_features=None, strip_accents='unicode',
