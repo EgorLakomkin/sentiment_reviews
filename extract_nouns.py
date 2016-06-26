@@ -34,18 +34,17 @@ def get_candidate_sentiment_phrases( doc, noun_phrase ):
 def yield_candidates( nlp_obj, text ):
     doc = nlp_obj( text, entity = False )
 
-    for sent in doc.sents:
-        for np in sent.doc.noun_chunks:
-            if filter_noun_phrase( np, doc ):
-                acomp_nodes = get_candidate_sentiment_phrases( doc, np )
-                if len(acomp_nodes) > 0:
-                    for phrase, np, acomp_node in acomp_nodes:
-                        res = {}
-                        res['topic'] =  np.root.lemma_.lower()
-                        res['topic_acomp'] = acomp_node.lemma_.lower()
-                        res['topic_phrase'] = [unicode(n)  for n in phrase]
-                        res["topic_sentiment"] = 0.5
-                        yield res
+    for np in doc.noun_chunks:
+        if filter_noun_phrase( np, doc ):
+            acomp_nodes = get_candidate_sentiment_phrases(  doc, np )
+            if len(acomp_nodes) > 0:
+                for phrase, np, acomp_node in acomp_nodes:
+                    res = {}
+                    res['topic'] =  np.root.lemma_.lower()
+                    res['topic_acomp'] = acomp_node.lemma_.lower()
+                    res['topic_phrase'] = [unicode(n)  for n in phrase]
+                    res["topic_sentiment"] = 0.5
+                    yield res
 
 if __name__ == "__main__":
     reviews = load_booking_reviews()
