@@ -22,9 +22,15 @@ def merge_topic_info(lst_topic_info):
     :param lst_topic_info:
     :return:
     """
-    topic_info_dict = defaultdict(list)
+    topic_info_dict = {}
     for info in lst_topic_info:
-        topic_info_dict[ info["topic"] ].append( info )
+        topic_name = info["topic"]
+        if topic_name not in topic_info_dict:
+            topic_info_dict[ topic_name ] = {
+                "total_sentiment" : 0.5,
+                "topic_aspects" : []
+            }
+        topic_info_dict[ topic_name ][ "topic_aspects" ].append( info )
     return topic_info_dict
 
 @app.route('/extract_topics/<review>')
