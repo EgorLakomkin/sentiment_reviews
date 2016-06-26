@@ -33,17 +33,19 @@ def get_candidate_sentiment_phrases( doc, noun_phrase ):
 
 def yield_candidates( nlp_obj, text ):
     doc = nlp_obj( text, entity = False )
-    for np in doc.noun_chunks:
-        if filter_noun_phrase( np, doc ):
-            acomp_nodes = get_candidate_sentiment_phrases( doc, np )
-            if len(acomp_nodes) > 0:
-                for phrase, np, acomp_node in acomp_nodes:
-                    res = {}
-                    res['topic'] =  np.root.lemma_.lower()
-                    res['topic_acomp'] = acomp_node.lemma_.lower()
-                    res['topic_phrase'] = [unicode(n)  for n in phrase]
 
-                    yield res
+    for sent in doc.sents:
+        for np in sent.doc.noun_chunks:
+            if filter_noun_phrase( np, doc ):
+                acomp_nodes = get_candidate_sentiment_phrases( doc, np )
+                if len(acomp_nodes) > 0:
+                    for phrase, np, acomp_node in acomp_nodes:
+                        res = {}
+                        res['topic'] =  np.root.lemma_.lower()
+                        res['topic_acomp'] = acomp_node.lemma_.lower()
+                        res['topic_phrase'] = [unicode(n)  for n in phrase]
+
+                        yield res
 
 if __name__ == "__main__":
     reviews = load_booking_reviews()
@@ -57,20 +59,13 @@ if __name__ == "__main__":
 
         review_text = review.text
 
-        doc = nlp( review_text, entity = False )
-        print doc
-        for np in doc.noun_chunks:
+        for res in yield_candidates( nlp, review_text ):
 
-            if filter_noun_phrase( np, doc ):
-                acomp_nodes = get_candidate_sentiment_phrases( doc, np )
-                if len(acomp_nodes) > 0:
-                    for phrase, np, acomp_node in acomp_nodes:
-                        print np, "->", acomp_node
-                        print np.root
-                        key = np.root.lemma_.lower()
-                        val = acomp_node.lemma_.lower()
-                        topic_stats[ key ].append( val )
-                        print phrase
+            print res['topic'], "->", res['topic_acomp']
+            print res['topic_phrase']
+            topic_stats[ res['topic'] ].append( res['topic_acomp']  )
+
+
     print "Total nodes", len(topic_stats)
     topic_freq = {n: len(s) for n, s in topic_stats.iteritems() }
     sorted_by_freq = sorted( topic_freq.iteritems(), key = lambda x: x[1], reverse= True )
