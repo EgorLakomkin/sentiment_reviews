@@ -32,8 +32,9 @@ def get_candidate_sentiment_phrases( doc, noun_phrase ):
 
 
 def yield_candidates( nlp_obj, text ):
-    doc = nlp_obj( text, entity = False )
 
+    doc = nlp_obj( text, entity = False )
+    doc[:].root.dep = 410
     for np in doc.noun_chunks:
         if filter_noun_phrase( np, doc ):
             acomp_nodes = get_candidate_sentiment_phrases(  doc, np )
