@@ -2,11 +2,11 @@ from data_utils import load_booking_reviews
 import spacy
 from collections import defaultdict
 
-np_root_filter_list = [ "i", "we", "it", "you", "they", "she", "he"]
+np_root_filter_list = [ "i", "we", "it", "you", "they", "she", "he", "nothing"]
 
 adj_filter_list = [ "my", "our", "other", "more", "your", "all", "first", "next", "that", "better",
                     "only", "mich", "its", "whole", "such", "second", "same", "most", "few", "overall",
-                    "sure", "open", "last", "his", "due", "able", "non", ]
+                    "sure", "open", "last", "his", "due", "able", "non", "many", "much"]
 
 
 def node_acomp_filter(node):
@@ -24,7 +24,7 @@ def filter_noun_phrase(noun_phrase, doc):
     if root.lemma_ in np_root_filter_list:
         return False
     print root.dep_, root
-    if root.dep_ != "nsubj":
+    if root.dep_ not in ["nsubj", "root"]:
         print "filterint out", root.lemma_, root.dep_
         return False
 
@@ -90,4 +90,4 @@ if __name__ == "__main__":
         print adj, "  ", adj_count
     num_docs = len(reviews)
 
-    joblib.dump( topic_freq, "./data/topic_freqs.dat" )
+    joblib.dump( { "topics_stats" : topic_freq, "num_reviews" : len(reviews)}, "./data/topic_freqs.dat" )
