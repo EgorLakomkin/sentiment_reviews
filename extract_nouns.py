@@ -9,6 +9,15 @@ adj_filter_list = [ "my", "our", "other", "more", "your", "all", "first", "next"
                     "sure", "open", "last", "his", "due", "able", "non", "many", "much"]
 
 
+def noun_chunk_to_head_noun(chunk):
+    """Given a chunk, find the noun who's head is outside the chunk. This is the head noun"""
+    nouns = [t for t in chunk if t.pos_ == "NOUN"]
+    if len(nouns) == 0:
+        raise Exception("0 noun in chunk")
+    if len(nouns) > 1:
+        raise Exception(">1 nouns in chunk")
+    return nouns[0]
+
 def node_acomp_filter(node):
     #if node.dep_ == "acomp":
     #    return True
@@ -20,12 +29,14 @@ def node_acomp_filter(node):
     return False
 
 def filter_noun_phrase(noun_phrase, doc):
-    root = noun_phrase.root
-    if root.lemma_ in np_root_filter_list:
+    head_noun = noun_chunk_to_head_noun( noun_phrase )
+    if head_noun is None:
         return False
-    print root.dep_, root
-    if root.dep_ not in ["nsubj", "root"]:
-        print "filterint out", root.lemma_, root.dep_
+    if head_noun.lemma_ in np_root_filter_list:
+        return False
+    print head_noun.dep_, head_noun
+    if head_noun.dep_ not in ["nsubj", "root"]:
+        print "filterint out", head_noun.lemma_, head_noun.dep_
         return False
 
     return True
@@ -65,6 +76,8 @@ if __name__ == "__main__":
 
     topic_stats = defaultdict(list)
     adj_stats =  defaultdict(int)
+
+    test = list( yield_candidates( nlp, u"good facilities and great staff" ) )
 
     for review in reviews:
 
