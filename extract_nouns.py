@@ -11,11 +11,12 @@ adj_filter_list = [ "my", "our", "other", "more", "your", "all", "first", "next"
 
 def noun_chunk_to_head_noun(chunk):
     """Given a chunk, find the noun who's head is outside the chunk. This is the head noun"""
-    nouns = [t for t in chunk if t.pos_ == "NOUN"]
+    nouns = [t for t in chunk if t.pos_ in ["NOUN", "PRON", "PROPN"]]
     if len(nouns) == 0:
+        #print chunk
         raise Exception("0 noun in chunk")
     if len(nouns) > 1:
-        raise Exception(">1 nouns in chunk")
+        return nouns[-1]
     return nouns[0]
 
 def node_acomp_filter(node):
@@ -35,7 +36,7 @@ def filter_noun_phrase(noun_phrase, doc):
     if head_noun.lemma_ in np_root_filter_list:
         return False
     print head_noun.dep_, head_noun
-    if head_noun.dep_ not in ["nsubj", "root"]:
+    if head_noun.dep_ not in ["nsubj", "root", 'nsubjpass', 'conj', 'pobj']:
         print "filterint out", head_noun.lemma_, head_noun.dep_
         return False
 
@@ -44,28 +45,56 @@ def filter_noun_phrase(noun_phrase, doc):
 def get_candidate_sentiment_phrases( doc, noun_phrase ):
     root = noun_phrase.root
     res = []
-    for node in  root.head.subtree:
+    for node in  noun_phrase:
         if node_acomp_filter( node ):
-            res.append( (list(root.head.subtree), noun_phrase,  node) )
+            res.append( {
+                'noun_phrase' : noun_phrase,
+                'potential_sentiment' : node
+            } )
 
     return res
 
+
+def get_verb_candidates(  doc, np ):
+    #head_noun = noun_chunk_to_head_noun(np)
+    res = []
+    np_root = np.root.head
+    if np_root.lemma_ == "be":
+        for children in np_root.children:
+            if node_acomp_filter( children ):
+                res.append({
+                    'noun_phrase': np,
+                    'potential_sentiment': children
+                })
+                print np, '  --- >>>  ',np_root,  children
+    return res
 
 def yield_candidates( nlp_obj, text ):
 
     doc = nlp_obj( text, entity = False )
     doc[:].root.dep = 410
     for np in doc.noun_chunks:
+
+        noun_phrase_head = noun_chunk_to_head_noun( np )
         if filter_noun_phrase( np, doc ):
             acomp_nodes = get_candidate_sentiment_phrases(  doc, np )
             if len(acomp_nodes) > 0:
-                for phrase, np, acomp_node in acomp_nodes:
+                for sentiment_info in acomp_nodes:
                     res = {}
-                    res['topic'] =  np.root.lemma_.lower()
-                    res['topic_acomp'] = acomp_node.lemma_.lower()
-                    res['topic_phrase'] = [unicode(n)  for n in phrase]
+                    res['topic'] =  noun_phrase_head.lemma_.lower()
+                    res['topic_acomp'] = sentiment_info['potential_sentiment'].lemma_.lower()
+                    res['topic_phrase'] = [unicode(n)  for n in np]
                     res["topic_sentiment"] = 0.5
                     yield res
+
+            verb_candidates = get_verb_candidates( doc, np )
+            for sentiment_info in verb_candidates:
+                res = {}
+                res['topic'] = noun_phrase_head.lemma_.lower()
+                res['topic_acomp'] = sentiment_info['potential_sentiment'].lemma_.lower()
+                res['topic_phrase'] = [unicode(n) for n in np]
+                res["topic_sentiment"] = 0.5
+                yield res
 
 if __name__ == "__main__":
     import joblib
@@ -77,6 +106,7 @@ if __name__ == "__main__":
     topic_stats = defaultdict(list)
     adj_stats =  defaultdict(int)
 
+    test = list(yield_candidates(nlp, u"the water was bad"))
     test = list( yield_candidates( nlp, u"good facilities and great staff" ) )
 
     for review in reviews:
