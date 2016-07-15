@@ -71,11 +71,10 @@ def get_verb_candidates(  doc, np ):
                         possible_negation = prev_children
 
                 sent_phrase = possible_negation.text + u' ' + children.text if possible_negation else children.text
-                total_phrase = u" ".join( [n.text for n in np] + [np_root.text,sent_phrase ] )
                 res.append({
                     'noun_phrase': np,
                     'potential_sentiment': sent_phrase,
-                    'total_phrase' : total_phrase
+                    'total_phrase' : [n.text for n in np] + [np_root.text,sent_phrase ]
                 })
                 print np, '  --- >>>  ',np_root,  sent_phrase
     return res
