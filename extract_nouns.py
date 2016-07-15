@@ -60,13 +60,24 @@ def get_verb_candidates(  doc, np ):
     res = []
     np_root = np.root.head
     if np_root.lemma_ == "be":
-        for children in np_root.children:
+        childrens = list( np_root.children )
+        for children_idx, children in enumerate(childrens):
+
+            possible_negation = None
             if node_acomp_filter( children ):
+                if children_idx - 1 >= 0:
+                    prev_children  = childrens[ children_idx - 1 ]
+                    if prev_children.dep_ == "neg":
+                        possible_negation = prev_children
+
+                sent_phrase = possible_negation.text + u' ' + children.text if possible_negation else children.text
+                total_phrase = u" ".join( [n.text for n in np] + [np_root.text,sent_phrase ] )
                 res.append({
                     'noun_phrase': np,
-                    'potential_sentiment': children
+                    'potential_sentiment': sent_phrase,
+                    'total_phrase' : total_phrase
                 })
-                print np, '  --- >>>  ',np_root,  children
+                print np, '  --- >>>  ',np_root,  sent_phrase
     return res
 
 def yield_candidates( nlp_obj, text ):
@@ -82,18 +93,16 @@ def yield_candidates( nlp_obj, text ):
                 for sentiment_info in acomp_nodes:
                     res = {}
                     res['topic'] =  noun_phrase_head.lemma_.lower()
-                    res['topic_acomp'] = sentiment_info['potential_sentiment'].lemma_.lower()
+                    res['topic_acomp'] = sentiment_info['potential_sentiment']
                     res['topic_phrase'] = [unicode(n)  for n in np]
-                    res["topic_sentiment"] = 0.5
                     yield res
 
             verb_candidates = get_verb_candidates( doc, np )
             for sentiment_info in verb_candidates:
                 res = {}
                 res['topic'] = noun_phrase_head.lemma_.lower()
-                res['topic_acomp'] = sentiment_info['potential_sentiment'].lemma_.lower()
-                res['topic_phrase'] = [unicode(n) for n in np]
-                res["topic_sentiment"] = 0.5
+                res['topic_acomp'] = sentiment_info['potential_sentiment']
+                res['topic_phrase'] = sentiment_info['total_phrase']
                 yield res
 
 if __name__ == "__main__":
@@ -106,7 +115,7 @@ if __name__ == "__main__":
     topic_stats = defaultdict(list)
     adj_stats =  defaultdict(int)
 
-    test = list(yield_candidates(nlp, u"the water was bad"))
+    test = list(yield_candidates(nlp, u"the water was not bad"))
     test = list( yield_candidates( nlp, u"good facilities and great staff" ) )
 
     for review in reviews:

@@ -4,8 +4,13 @@ import spacy
 from collections import defaultdict
 from extract_nouns import yield_candidates
 import joblib
+
+from english_sentiment import empty_analyzer
+
 app = Flask(__name__)
 nlp = spacy.en.English(entity = False)
+
+logreg_sentiment = joblib.load('./data/sentiment_logreg.pcl')
 
 review_data = joblib.load("./data/topic_freqs.dat")
 num_reviews = review_data[ "num_reviews" ]
@@ -22,6 +27,15 @@ top_20_topics = set([
 def top_20_topic_filter( topic_struct ):
     return topic_struct["topic"].lower() in top_20_topics
 
+
+def add_sentiments( topic_struct ):
+    phrase = topic_struct['topic_phrase']
+    prediction = logreg_sentiment.predict( [ phrase ] )[0]
+    topic_struct['topic_sentiment'] = prediction
+
+    return topic_struct
+
+
 def merge_topic_info(lst_topic_info):
     """
 
@@ -33,7 +47,6 @@ def merge_topic_info(lst_topic_info):
         topic_name = info["topic"]
         if topic_name not in topic_info_dict:
             topic_info_dict[ topic_name ] = {
-                "total_sentiment" : 0.5,
                 "topic_aspects" : []
             }
         topic_info_dict[ topic_name ][ "topic_aspects" ].append( info )
@@ -53,8 +66,9 @@ def extract_topic(review):
     topics = list(yield_candidates( nlp, review ))
     #topics = filter( top_20_topic_filter, topics )
     topics = map( add_topic_proba, topics )
+    topics = map(add_sentiments, topics)
     topic_merged_info = merge_topic_info( topics )
-    return jsonify({"topics":topic_merged_info})
+    return jsonify({"topics":topic_merged_info, 'review' :review })
 
 
 if __name__ == '__main__':
