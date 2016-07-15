@@ -49,7 +49,7 @@ def get_candidate_sentiment_phrases( doc, noun_phrase ):
         if node_acomp_filter( node ):
             res.append( {
                 'noun_phrase' : noun_phrase,
-                'potential_sentiment' : node
+                'potential_sentiment' : node.text
             } )
 
     return res

@@ -78,5 +78,5 @@ if __name__ == '__main__':
     else:
         port = 8888
     app.run(host = '0.0.0.0',
-            port = port, debug = False, use_reloader=False)
+            port = port, debug = True, use_reloader=False)
 
