@@ -36,7 +36,7 @@ def filter_noun_phrase(noun_phrase, doc):
     if head_noun.lemma_ in np_root_filter_list:
         return False
     print head_noun.dep_, head_noun
-    if head_noun.dep_ not in ["nsubj", "root", 'nsubjpass', 'conj', 'pobj']:
+    if head_noun.dep_ not in ["nsubj", "root", 'nsubjpass', 'conj', 'pobj', 'dobj']:
         print "filterint out", head_noun.lemma_, head_noun.dep_
         return False
 

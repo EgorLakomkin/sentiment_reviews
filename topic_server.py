@@ -16,7 +16,7 @@ review_data = joblib.load("./data/topic_freqs.dat")
 num_reviews = review_data[ "num_reviews" ]
 topics_freq = review_data[ "topics_stats" ]
 
-get_topic_proba = lambda x : (1.0 + topics_freq[x]) / ( 1.0 + num_reviews )
+get_topic_proba = lambda x : (1.0 + topics_freq[x]) / ( 1.0 + num_reviews ) if x in topics_freq else 1.0/num_reviews
 
 top_20_topics = set([
     'room', 'staff', 'location', 'bed', 'breakfast', 'hotel',
